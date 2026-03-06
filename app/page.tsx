@@ -1,4 +1,4 @@
-import { ChevronRightIcon, SearchIcon } from "lucide-react"
+import { SearchIcon } from "lucide-react"
 import Header from "./_components/header"
 import { Button } from "./_components/ui/button"
 import { Input } from "./_components/ui/input"
@@ -8,6 +8,7 @@ import { db } from "./_lib/prisma"
 import BarbershopItem from "./_components/barbershop-item"
 import quickSearchOptions from "./_constants/search"
 import BookingItem from "./_components/booking-item"
+import BarberShopList from "./_components/barbershop-list"
 
 const Home = async () => {
     const barbershops = await db.barbershop.findMany()
@@ -62,35 +63,15 @@ const Home = async () => {
                 <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
                     Recomendados
                 </h2>
-                <div className="relative">
-                    <div className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden">
-                        {barbershops.map((barbershop) => (
-                            <BarbershopItem
-                                key={barbershop.id}
-                                barbershop={barbershop}
-                            />
-                        ))}
-                    </div>
-
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full"
-                    >
-                        <ChevronRightIcon />
-                    </Button>
-                </div>
-                <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
-                    Populares
-                </h2>
                 <div className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden">
-                    {popularBarberShops.map((barbershop) => (
+                    {barbershops.map((barbershop) => (
                         <BarbershopItem
                             key={barbershop.id}
                             barbershop={barbershop}
                         />
                     ))}
                 </div>
+                <BarberShopList items={popularBarberShops} title="Populares" />
             </div>
             <footer>
                 <Card>
