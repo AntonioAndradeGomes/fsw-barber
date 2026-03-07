@@ -1,13 +1,8 @@
+import PhoneItem from "@/app/_components/phone-item"
 import ServiceItem from "@/app/_components/service-item"
 import { Button } from "@/app/_components/ui/button"
 import { db } from "@/app/_lib/prisma"
-import {
-    ChevronLeftIcon,
-    MapPinIcon,
-    MenuIcon,
-    SmartphoneIcon,
-    StarIcon,
-} from "lucide-react"
+import { ChevronLeftIcon, MapPinIcon, MenuIcon, StarIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -98,15 +93,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
 
             <div className="space-y-3 p-5">
                 {barbershop.phones.map((item) => (
-                    <div className="flex justify-between" key={item}>
-                        <div className="flex items-center">
-                            <SmartphoneIcon />
-                            <p>{item}</p>
-                        </div>
-                        <Button variant="outline" size="sm">
-                            Copiar
-                        </Button>
-                    </div>
+                    <PhoneItem key={item} phone={item} />
                 ))}
             </div>
         </div>
