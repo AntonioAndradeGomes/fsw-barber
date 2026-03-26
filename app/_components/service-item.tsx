@@ -15,10 +15,17 @@ import {
 import { Calendar } from "./ui/calendar"
 import { ptBR } from "date-fns/locale"
 import { useState } from "react"
-import { format } from "date-fns"
+import { format, set } from "date-fns"
+import { useSession } from "next-auth/react"
+import { createBooking } from "../_actions/create-booking"
+import { toast } from "sonner"
+
+type ServiceFormatted = Omit<BarbershopService, "price"> & {
+    price: number
+}
 
 interface ServiceItemProps {
-    service: BarbershopService
+    service: ServiceFormatted
     barbershop: Pick<Barbershop, "name">
 }
 
@@ -47,6 +54,7 @@ const TIME_LIST = [
 ]
 
 const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
+    const { data } = useSession()
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(undefined)
     const [selectedTime, setSelectedTime] = useState<string | undefined>(
         undefined,
@@ -58,6 +66,27 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
 
     const handleTimeSelect = (time: string | undefined) => {
         setSelectedTime(time)
+    }
+
+    const handleCreateBooking = async () => {
+        try {
+            if (!selectedDay || !selectedTime) return
+            const hour = Number(selectedTime?.split(":")[0])
+            const minute = Number(selectedTime?.split(":")[1])
+            const newDate = set(selectedDay, {
+                minutes: minute,
+                hours: hour,
+            })
+            await createBooking({
+                serviceId: service.id,
+                userId: data!.user.id,
+                date: newDate,
+            })
+            toast.success("Reserva criada com sucesso")
+        } catch (error) {
+            console.error(error)
+            toast.error("Erro ao criar reserva")
+        }
     }
     return (
         <Card>
@@ -82,7 +111,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                             {Intl.NumberFormat("pt-BR", {
                                 style: "currency",
                                 currency: "BRL",
-                            }).format(Number(service.price))}
+                            }).format(service.price)}
                         </p>
 
                         <Sheet>
@@ -162,11 +191,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                                                 style: "currency",
                                                                 currency: "BRL",
                                                             },
-                                                        ).format(
-                                                            Number(
-                                                                service.price,
-                                                            ),
-                                                        )}
+                                                        ).format(service.price)}
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center justify-between">
@@ -201,9 +226,16 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                         </Card>
                                     </div>
                                 )}
-                                <SheetFooter className="px-5">
+                                <SheetFooter className="mt-5 px-5">
                                     <SheetClose asChild>
-                                        <Button type="submit">Confirmar</Button>
+                                        <Button
+                                            onClick={handleCreateBooking}
+                                            disabled={
+                                                !selectedDay || !selectedTime
+                                            }
+                                        >
+                                            Confirmar
+                                        </Button>
                                     </SheetClose>
                                 </SheetFooter>
                             </SheetContent>

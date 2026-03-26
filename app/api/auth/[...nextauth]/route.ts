@@ -17,6 +17,15 @@ const handler = NextAuth({
             },
         }),
     ],
+    callbacks: {
+        async session({ session, user }) {
+            session.user = {
+                ...user,
+                id: user.id,
+            }
+            return session
+        },
+    },
 })
 
 export { handler as GET, handler as POST }
