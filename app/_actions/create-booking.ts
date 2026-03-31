@@ -2,16 +2,24 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "../_lib/prisma"
+import { getServerSession } from "next-auth"
 
 interface CreateBookingParams {
     serviceId: string
-    userId: string
+
     date: Date
 }
 
 export const createBooking = async (params: CreateBookingParams) => {
+    const user = await getServerSession()
+    if (!user) {
+        throw new Error("Usuário não autenticado")
+    }
     await db.booking.create({
-        data: params,
+        data: {
+            ...params,
+            userId: user.user.id,
+        },
     })
     revalidatePath("/barbershops/[id]")
     revalidatePath("/bookings")
