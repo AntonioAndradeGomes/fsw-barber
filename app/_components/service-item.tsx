@@ -1,24 +1,27 @@
 "use client"
-import { Barbershop, BarbershopService } from "@/generated/prisma/client"
+import {
+    Barbershop,
+    BarbershopService,
+    Booking,
+} from "@/generated/prisma/client"
 import Image from "next/image"
 import { Button } from "./ui/button"
 import { Card, CardContent } from "./ui/card"
 import {
     Sheet,
-    SheetClose,
     SheetContent,
     SheetFooter,
     SheetHeader,
     SheetTitle,
-    SheetTrigger,
 } from "./ui/sheet"
 import { Calendar } from "./ui/calendar"
 import { ptBR } from "date-fns/locale"
-import { useState } from "react"
-import { format, set } from "date-fns"
+import { useEffect, useMemo, useState } from "react"
+import { format, isPast, isToday, set } from "date-fns"
 import { useSession } from "next-auth/react"
 import { createBooking } from "../_actions/create-booking"
 import { toast } from "sonner"
+import { getBookings } from "../_actions/get-bookings"
 
 type ServiceFormatted = Omit<BarbershopService, "price"> & {
     price: number
@@ -53,12 +56,56 @@ const TIME_LIST = [
     "18:00",
 ]
 
+interface GetTimeListProps {
+    bookings: Booking[]
+    selectedDay: Date
+}
+
+const getTimeList = ({ bookings, selectedDay }: GetTimeListProps) => {
+    return TIME_LIST.filter((time) => {
+        const hour = Number(time.split(":")[0])
+        const minutes = Number(time.split(":")[1])
+
+        const timeIsOnThePast = isPast(
+            set(new Date(), { hours: hour, minutes }),
+        )
+        if (timeIsOnThePast && isToday(selectedDay)) {
+            return false
+        }
+
+        const hasBookingOnCurrentTime = bookings.some(
+            (booking) =>
+                booking.date.getHours() === hour &&
+                booking.date.getMinutes() === minutes,
+        )
+        if (hasBookingOnCurrentTime) {
+            return false
+        }
+        return true
+    })
+}
+
 const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     const { data } = useSession()
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(undefined)
     const [selectedTime, setSelectedTime] = useState<string | undefined>(
         undefined,
     )
+
+    const [dayBookings, setDayBookings] = useState<Booking[]>([])
+    const [bookingSheetIsOpen, setBookingSheetIsOpen] = useState(false)
+
+    useEffect(() => {
+        const fetch = async () => {
+            if (!selectedDay) return
+            const bookings = await getBookings({
+                date: selectedDay,
+                serviceId: service.id,
+            })
+            setDayBookings(bookings)
+        }
+        fetch()
+    }, [selectedDay, service.id])
 
     const handleDateSelect = (date: Date | undefined) => {
         setSelectedDay(date)
@@ -68,26 +115,47 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
         setSelectedTime(time)
     }
 
+    const handleBookingSheetOpenChange = () => {
+        setSelectedDay(undefined)
+        setSelectedTime(undefined)
+        setDayBookings([])
+        setBookingSheetIsOpen(false)
+    }
+
     const handleCreateBooking = async () => {
         try {
             if (!selectedDay || !selectedTime) return
+            const [year, month, day] = [
+                selectedDay.getFullYear(),
+                selectedDay.getMonth(),
+                selectedDay.getDate(),
+            ]
+
             const hour = Number(selectedTime?.split(":")[0])
             const minute = Number(selectedTime?.split(":")[1])
-            const newDate = set(selectedDay, {
-                minutes: minute,
-                hours: hour,
-            })
+
+            const newDate = new Date(year, month, day, hour, minute)
             await createBooking({
                 serviceId: service.id,
                 userId: data!.user.id,
                 date: newDate,
             })
+            handleBookingSheetOpenChange()
             toast.success("Reserva criada com sucesso")
         } catch (error) {
             console.error(error)
+            handleBookingSheetOpenChange()
             toast.error("Erro ao criar reserva")
         }
     }
+
+    const timeList = useMemo(() => {
+        if (!selectedDay) return []
+        return getTimeList({
+            bookings: dayBookings,
+            selectedDay,
+        })
+    }, [dayBookings, selectedDay])
     return (
         <Card>
             <CardContent className="roun flex items-center gap-3 p-3">
@@ -114,12 +182,18 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                             }).format(service.price)}
                         </p>
 
-                        <Sheet>
-                            <SheetTrigger asChild>
-                                <Button variant="secondary" size="sm">
-                                    Reservar
-                                </Button>
-                            </SheetTrigger>
+                        <Sheet
+                            open={bookingSheetIsOpen}
+                            onOpenChange={handleBookingSheetOpenChange}
+                        >
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setBookingSheetIsOpen(true)}
+                            >
+                                Reservar
+                            </Button>
+
                             <SheetContent className="px-0">
                                 <SheetHeader>
                                     <SheetTitle>Fazer Reserva</SheetTitle>
@@ -131,6 +205,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                         selected={selectedDay}
                                         onSelect={handleDateSelect}
                                         locale={ptBR}
+                                        disabled={{ before: new Date() }}
                                         styles={{
                                             head_cell: {
                                                 width: "100%",
@@ -158,24 +233,32 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                 </div>
                                 {selectedDay && (
                                     <div className="flex gap-3 overflow-x-auto border-b border-solid p-5 [&::-webkit-scrollbar]:hidden">
-                                        {TIME_LIST.map((time) => (
-                                            <Button
-                                                key={time}
-                                                variant={
-                                                    selectedTime === time
-                                                        ? "default"
-                                                        : "outline"
-                                                }
-                                                className="rounded-full"
-                                                onClick={() =>
-                                                    handleTimeSelect(time)
-                                                }
-                                            >
-                                                {time}
-                                            </Button>
-                                        ))}
+                                        {timeList.length > 0 ? (
+                                            timeList.map((time) => (
+                                                <Button
+                                                    key={time}
+                                                    variant={
+                                                        selectedTime === time
+                                                            ? "default"
+                                                            : "outline"
+                                                    }
+                                                    className="rounded-full"
+                                                    onClick={() =>
+                                                        handleTimeSelect(time)
+                                                    }
+                                                >
+                                                    {time}
+                                                </Button>
+                                            ))
+                                        ) : (
+                                            <p className="text-xs">
+                                                Não há horários disponíveis para
+                                                este dia.
+                                            </p>
+                                        )}
                                     </div>
                                 )}
+
                                 {selectedTime && selectedDay && (
                                     <div className="p-5">
                                         <Card>
@@ -227,16 +310,12 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                     </div>
                                 )}
                                 <SheetFooter className="mt-5 px-5">
-                                    <SheetClose asChild>
-                                        <Button
-                                            onClick={handleCreateBooking}
-                                            disabled={
-                                                !selectedDay || !selectedTime
-                                            }
-                                        >
-                                            Confirmar
-                                        </Button>
-                                    </SheetClose>
+                                    <Button
+                                        onClick={handleCreateBooking}
+                                        disabled={!selectedDay || !selectedTime}
+                                    >
+                                        Confirmar
+                                    </Button>
                                 </SheetFooter>
                             </SheetContent>
                         </Sheet>
