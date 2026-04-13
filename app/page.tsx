@@ -12,6 +12,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "./_lib/auth"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { getConcludedBookings } from "./_data/get-concluded-bookings"
 
 const Home = async () => {
     const session = await getServerSession(authOptions)
@@ -22,27 +23,7 @@ const Home = async () => {
         },
     })
 
-    const confirmedBookings = session?.user
-        ? await db.booking.findMany({
-              where: {
-                  userId: session?.user?.id,
-                  date: {
-                      gte: new Date(),
-                  },
-              },
-              include: {
-                  service: {
-                      include: {
-                          barberShop: true,
-                      },
-                  },
-              },
-              orderBy: {
-                  date: "asc",
-              },
-          })
-        : []
-
+    const confirmedBookings = await getConcludedBookings()
     return (
         <div>
             <Header />
