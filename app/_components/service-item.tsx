@@ -17,7 +17,7 @@ import {
 import { Calendar } from "./ui/calendar"
 import { ptBR } from "date-fns/locale"
 import { useEffect, useMemo, useState } from "react"
-import { format, isPast, isToday, set } from "date-fns"
+import { isPast, isToday, set } from "date-fns"
 import { useSession } from "next-auth/react"
 import { createBooking } from "../_actions/create-booking"
 import { toast } from "sonner"
@@ -25,13 +25,10 @@ import { getBookings } from "../_actions/get-bookings"
 import { Dialog, DialogContent } from "./ui/dialog"
 import {} from "@radix-ui/react-dialog"
 import SignInDialog from "./sign-in-dialog"
-
-type ServiceFormatted = Omit<BarbershopService, "price"> & {
-    price: number
-}
+import BookingSummary from "./booking-summary"
 
 interface ServiceItemProps {
-    service: ServiceFormatted
+    service: BarbershopService
     barbershop: Pick<Barbershop, "name">
 }
 
@@ -119,6 +116,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     }
 
     const handleDateSelect = (date: Date | undefined) => {
+        setSelectedTime(undefined)
         setSelectedDay(date)
     }
 
@@ -166,6 +164,15 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
             selectedDay,
         })
     }, [dayBookings, selectedDay])
+
+    const selectedDate = useMemo(() => {
+        if (!selectedDay || !selectedTime) return null
+        return set(selectedDay, {
+            hours: Number(selectedTime.split(":")[0]),
+            minutes: Number(selectedTime.split(":")[1]),
+        })
+    }, [selectedDay, selectedTime])
+
     return (
         <>
             <Card>
@@ -190,7 +197,7 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                 {Intl.NumberFormat("pt-BR", {
                                     style: "currency",
                                     currency: "BRL",
-                                }).format(service.price)}
+                                }).format(Number(service.price))}
                             </p>
 
                             <Sheet
@@ -273,59 +280,13 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                         </div>
                                     )}
 
-                                    {selectedTime && selectedDay && (
+                                    {selectedDate && (
                                         <div className="p-5">
-                                            <Card>
-                                                <CardContent className="space-y-3 p-3">
-                                                    <div className="flex items-center justify-between">
-                                                        <h2 className="font-bold">
-                                                            {service.name}
-                                                        </h2>
-                                                        <p className="text-sm font-bold">
-                                                            {Intl.NumberFormat(
-                                                                "pt-BR",
-                                                                {
-                                                                    style: "currency",
-                                                                    currency:
-                                                                        "BRL",
-                                                                },
-                                                            ).format(
-                                                                service.price,
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex items-center justify-between">
-                                                        <h2 className="text-sm text-gray-400">
-                                                            Data
-                                                        </h2>
-                                                        <p className="text-sm">
-                                                            {format(
-                                                                selectedDay,
-                                                                "d 'de' MMMM",
-                                                                {
-                                                                    locale: ptBR,
-                                                                },
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex items-center justify-between">
-                                                        <h2 className="text-sm text-gray-400">
-                                                            Horário
-                                                        </h2>
-                                                        <p className="text-sm">
-                                                            {selectedTime}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex items-center justify-between">
-                                                        <h2 className="text-sm text-gray-400">
-                                                            Barbearia
-                                                        </h2>
-                                                        <p className="text-sm">
-                                                            {barbershop.name}
-                                                        </p>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
+                                            <BookingSummary
+                                                barbershop={barbershop}
+                                                service={service}
+                                                selectedDate={selectedDate}
+                                            />
                                         </div>
                                     )}
                                     <SheetFooter className="mt-5 px-5">
