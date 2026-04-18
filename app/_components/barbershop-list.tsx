@@ -31,23 +31,24 @@ const BarberShopList = ({ items, title }: BarberShopListProps) => {
         }
     }
 
-    const handleSetScroll = (scroll: number) => {
+    const handleSetScroll = (direction: number) => {
+        const itemWidth = window.innerWidth >= 768 ? 236 : 183
         const currentScrollLeft = scrollRef.current?.scrollLeft || 0
         scrollRef.current?.scrollTo({
             behavior: "smooth",
-            left: currentScrollLeft + scroll,
+            left: currentScrollLeft + direction * itemWidth,
         })
     }
 
     return (
         <>
-            <h2 className="mb-3 mt-6 text-xs font-bold uppercase text-gray-400">
+            <h2 className="mb-5 text-xs font-bold uppercase text-gray-400">
                 {title}
             </h2>
             <div className="relative">
                 <div
                     ref={scrollRef}
-                    className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden"
+                    className="flex gap-4 overflow-auto [&::-webkit-scrollbar]:hidden [&>*]:w-[167px] [&>*]:flex-none md:[&>*]:w-[220px]"
                     onScroll={handleScroll}
                 >
                     {items.map((item) => (
@@ -60,7 +61,7 @@ const BarberShopList = ({ items, title }: BarberShopListProps) => {
                     variant="outline"
                     size="icon"
                     className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full ring-0 transition-opacity focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:opacity-0"
-                    onClick={() => handleSetScroll(-170)}
+                    onClick={() => handleSetScroll(-1)}
                 >
                     <ChevronLeftIcon size={32} />
                 </Button>
@@ -70,7 +71,7 @@ const BarberShopList = ({ items, title }: BarberShopListProps) => {
                     variant="outline"
                     size="icon"
                     className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full ring-0 transition-opacity focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:opacity-0"
-                    onClick={() => handleSetScroll(170)}
+                    onClick={() => handleSetScroll(1)}
                 >
                     <ChevronRightIcon size={32} />
                 </Button>

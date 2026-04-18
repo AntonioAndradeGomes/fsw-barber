@@ -40,8 +40,10 @@ const Header = () => {
 
                     <div className="hidden sm:block">
                         <nav className="flex gap-4">
-                            <Button className="gap-2" variant="ghost">
-                                <CalendarDays /> Agendamento
+                            <Button className="gap-2" variant="ghost" asChild>
+                                <Link href="/bookings">
+                                    <CalendarDays /> Agendamentos
+                                </Link>
                             </Button>
                             {data?.user ? (
                                 <div className="flex items-center gap-2">

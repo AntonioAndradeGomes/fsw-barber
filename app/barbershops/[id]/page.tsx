@@ -1,3 +1,4 @@
+import Header from "@/app/_components/header"
 import PhoneItem from "@/app/_components/phone-item"
 import ServiceItem from "@/app/_components/service-item"
 import SidebarSheet from "@/app/_components/sidebar-sheet"
@@ -31,6 +32,63 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
 
     return (
         <div>
+            <div className="hidden md:block">
+                <Header />
+            </div>
+            <div>
+                <div className="relative h-[250px] w-full md:h-[485px] md:w-[758px]">
+                    <Image
+                        alt={barbershop!.name}
+                        src={barbershop!.imageUrl}
+                        fill
+                        className="object-cover"
+                    />
+                    <div className="block md:hidden">
+                        <Button
+                            size="icon"
+                            variant="secondary"
+                            className="absolute left-4 top-4"
+                            asChild
+                        >
+                            <Link href={"/"}>
+                                <ChevronLeftIcon size={32} />
+                            </Link>
+                        </Button>
+
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button
+                                    size="icon"
+                                    variant="secondary"
+                                    className="absolute right-4 top-4"
+                                >
+                                    <MenuIcon size={32} />
+                                </Button>
+                            </SheetTrigger>
+                            <SidebarSheet />
+                        </Sheet>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="mb-3 text-xl font-bold">
+                            {barbershop?.name}
+                        </h1>
+                        <div className="mb-2 flex items-center gap-2">
+                            <MapPinIcon className="text-primary" size={18} />
+                            <p className="text-sm">{barbershop?.address}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <StarIcon
+                            className="fill-primary text-primary"
+                            size={18}
+                        />
+                        <p className="text-sm">5,0 (499 avaliações)</p>
+                    </div>
+                </div>
+            </div>
+
             <div className="relative h-[250px] w-full">
                 <Image
                     alt={barbershop!.name}
@@ -46,7 +104,6 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                     asChild
                 >
                     <Link href={"/"}>
-                        {" "}
                         <ChevronLeftIcon size={32} />
                     </Link>
                 </Button>
