@@ -184,8 +184,8 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
     return (
         <>
             <Card>
-                <CardContent className="roun flex items-center gap-3 p-3">
-                    <div className="relative max-h-[110px] min-h-[110px] min-w-[110px] max-w-[110px]">
+                <CardContent className="flex gap-3 p-3">
+                    <div className="relative h-[110px] w-[90px] shrink-0 overflow-hidden rounded-lg">
                         <Image
                             src={service.imageUrl}
                             alt={service.name}
@@ -194,9 +194,9 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                         />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-1 flex-col justify-center gap-1 overflow-hidden">
                         <h3 className="font-semibold">{service.name}</h3>
-                        <p className="text-sm text-gray-400">
+                        <p className="line-clamp-2 text-sm text-gray-400">
                             {service.description}
                         </p>
 
@@ -222,7 +222,9 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
 
                                 <SheetContent className="px-0">
                                     <SheetHeader>
-                                        <SheetTitle>Fazer Reserva</SheetTitle>
+                                        <SheetTitle className="text-center">
+                                            Fazer Reserva
+                                        </SheetTitle>
                                     </SheetHeader>
                                     <div className="w-full border-b border-solid py-5">
                                         <Calendar
@@ -297,8 +299,9 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
                                             />
                                         </div>
                                     )}
-                                    <SheetFooter className="mt-5 px-5">
+                                    <SheetFooter className="mt-1 px-5">
                                         <Button
+                                            className="w-full"
                                             onClick={handleCreateBooking}
                                             disabled={
                                                 !selectedDay || !selectedTime
